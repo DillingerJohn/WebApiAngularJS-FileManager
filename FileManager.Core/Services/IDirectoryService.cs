@@ -7,8 +7,10 @@ namespace FileManager.Core.Services
 {
     public interface IDirectoryService
     {
-        Task<DirectoryClass> _get();
-        Task<DirectoryClass> _get(string path);
+        Task<DirectoryClass> _getNames();
+        Task<DirectoryClass> _getNames(string path);
+        Task<DirectoryClass> _getInfo();
+        Task<DirectoryClass> _getInfo(string path);
         Task<DirectoryInfo> _getDirectory(string path);
     }
 }

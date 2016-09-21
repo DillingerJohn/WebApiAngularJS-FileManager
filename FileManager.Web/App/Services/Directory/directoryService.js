@@ -12,110 +12,101 @@
             'update': { method: 'PUT' }
         });
 
-        var _getDirectories = function () {
-            $("#filemanager").hide();
-            $("#preloader").show();
+        var _getDirectoriesInfo = function (path) {
+            showLoadingAnim();
             var deferred = $q.defer();
-            resource.query({ action: "get", param: ""},
-				function (result) {
-				    $("#preloader").hide();
-				    $("#filemanager").show();
-				    if (result == null) {
-				        result = [];
-				    };
-				    deferred.resolve(result);
-				},
+            $http.post('/api/Directories/getDirectoriesInfo', path)
+                .then(function (result) {
+                    hideLoadingAnim();
+                    deferred.resolve(result);
+                },
 				function (response) {
-				    $("#preloader").hide();
-				    $("#filemanager").show();
+				    hideLoadingAnim();
 				    deferred.reject(response);
 				});
             return deferred.promise;
 
         };
 
-        var _getDirectory = function (path) {
-            $("#filemanager").hide();
-            $("#preloader").show();
+        var _getDirectory = function (path, pathStr) {
+            showLoadingAnim();
             var deferred = $q.defer();
-            resource.query({ action: 'getDirectory', param: path },
-				function (result) {
-				    $("#preloader").hide();
-				    $("#filemanager").show();
+            $http.post('/api/Directories/getDirectory', path, pathStr)
+				.then(function (result) {
+				    hideLoadingAnim();
 				    if (result == null) {
 				        result = [];
 				    };
-
 				    deferred.resolve(result);
 				},
 				function (response) {
-				    $("#preloader").hide();
-				    $("#filemanager").show();
+				    hideLoadingAnim();
 				    deferred.reject(response);
 				});
             return deferred.promise;
         };
 
         var _checkDir = function (dir) {
-            $("#filemanager").hide();
-            $("#preloader").show();
+            showLoadingAnim();
             var deferred = $q.defer();
             $http.post('/api/Directories/checkDir', dir)
                 .then(function (result) {
-                    $("#preloader").hide();
-                    $("#filemanager").show();
+                    hideLoadingAnim();
                     deferred.resolve(result);
                 },
                         function (response) {
-                            $("#preloader").hide();
-                            $("#filemanager").show();
+                            hideLoadingAnim();
                             deferred.reject(response);
                         });
             return deferred.promise;
         };
         var _openRoot = function (dir) {
-            $("#filemanager").hide();
-            $("#preloader").show();
+            showLoadingAnim();
             var deferred = $q.defer();
             $http.post('/api/Directories/openRoot', dir)
                 .then(function (result) {
-                    $("#preloader").hide();
-                    $("#filemanager").show();
+                    hideLoadingAnim();
                     deferred.resolve(result);
                 },
                         function (response) {
-                            $("#preloader").hide();
-                            $("#filemanager").show();
+                            hideLoadingAnim();
                             deferred.reject(response);
                         });
             return deferred.promise;
         };
         var _openParrent = function (dir) {
-            $("#filemanager").hide();
-            $("#preloader").show();
+            showLoadingAnim();
             var deferred = $q.defer();
             $http.post('/api/Directories/openParrent', dir)
                 .then(function (result) {
-                    $("#preloader").hide();
-                    $("#filemanager").show();
+                    hideLoadingAnim();
                     deferred.resolve(result);
                 },
                         function (response) {
-                            $("#preloader").hide();
-                            $("#filemanager").show();
+                            hideLoadingAnim();
                             deferred.reject(response);
                         });
             return deferred.promise;
         };
 
         return {
-            getDirectories: _getDirectories,
+            getDirectoriesInfo: _getDirectoriesInfo,
             getDirectory: _getDirectory,
             checkDir: _checkDir,
             openRoot: _openRoot,
             openParrent: _openParrent,
         };
 
+    }
+    function hideLoadingAnim()
+    {
+        $("#preloader").hide();
+        $("#filemanager").show();
+    }
+    function showLoadingAnim()
+    {
+        $("#filemanager").hide();
+        $("#preloader").show();
     }
 
 })();

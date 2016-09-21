@@ -10,90 +10,104 @@
     function DirectoryController($scope, $q, DirectoryService, errorHandler, $modal) {
         (function startup() {
             var directory = DirectoryService.getDirectory();
-            
-            $q.all([directory]).then(function (data) {
-                if (data != null) {
-                    $scope.directory = []; $scope.drives = []; $scope.directory = data[0];
+            var currentPath = {};
+            $q.all([directory]).then(function (result) {
+                if (result[0].data != null) {
+                    $scope.directory = []; $scope.drives = []; $scope.directory = result[0].data;
                     var currentDrivesList = $scope.drives.concat($scope.directory[0].drives);
                     $scope.drives = currentDrivesList;
+                    currentPath = $scope.directory[0].path;
                 }
             }, function (reason) {
                 errorHandler.logServiceError('DirectoryController', reason);
             }, function (update) {
                 errorHandler.logServiceNotify('DirectoryController', update);
             });
+            setdirectoriesInfo(currentPath);
+
         })();
+
+        function setdirectoriesInfo(currentPath) {
+            var directoriesInfo = DirectoryService.getDirectoriesInfo(currentPath);
+            $q.all([directoriesInfo]).then(function (result) {
+                if (result != null) {
+                    $scope.directory = [];
+                    $scope.directory.push(result[0].data);
+                }
+            }, function (reason) {
+                errorHandler.logServiceError('DirectoryController', reason);
+            }, function (update) {
+                errorHandler.logServiceNotify('DirectoryController', update);
+            });
+        };
 
         $scope.gotoDir = function (path) { DirectoryService.getDirectory(path); };
         $scope.directory = [];
         $scope.drives = [];
-
         $scope.Commands = {
             checkDir: function (dir) {
-                DirectoryService.checkDir(dir).then(
+                var path = { path: dir.path };
+                DirectoryService.getDirectory(path).then(
                     function (result) {
                         if (result.data != null) {
                             $scope.directory = []; $scope.drives = [];
                             $scope.directory.push(result.data[0]);
                             $scope.drives = $scope.directory[0].drives;
+                            setdirectoriesInfo(path);
                         }
                     },
                     function (response) {
-                      //  $scope.directory = response;
                         console.log(response);
                     });
             },
             openRoot: function (dir) {
-                DirectoryService.openRoot(dir).then(
+                var path = {path:dir.rootPath};
+                DirectoryService.getDirectory(path).then(
                     function (result) {
                         if (result.data != null) {
                             $scope.directory = []; $scope.drives = [];
                             $scope.directory.push(result.data[0]);
                             $scope.drives = $scope.directory[0].drives;
+                            setdirectoriesInfo(path);
                         }
                     },
                     function (response) {
-                        //  $scope.directory = response;
                         console.log(response);
                     });
             },
             openParrent: function (dir) {
-                DirectoryService.openParrent(dir).then(
+                var path = { path: dir.parrentPath };
+                DirectoryService.getDirectory(path).then(
                     function (result) {
                         if (result.data != null) {
                             $scope.directory = []; $scope.drives = [];
                             $scope.directory.push(result.data[0]);
                             $scope.drives = $scope.directory[0].drives;
+                            setdirectoriesInfo(path);
                         }
                     },
                     function (response) {
-                        //  $scope.directory = response;
                         console.log(response);
                     });
             }
         };
-
         $scope.Queries = {
-            getDirectories: function () {
-                DirectoryService.getDirectories();
+            getDirectoriesInfo: function (path) {
+                DirectoryService.getDirectoriesInfo(path);
             },
             getDirectory: function (path) {
                 DirectoryService.getDirectory(path);
             }
         };
-
         $scope.Actions = {
             openDir: function (dir) {
                 $scope.Commands.checkDir(dir);
-              //  $scope.directory = DirectoryService.checkDir(dir);
             },
             openRoot: function (dir) {
                 $scope.Commands.openRoot(dir);
-                //  $scope.directory = DirectoryService.checkDir(dir);
             },
             openParrent: function (dir) {
                 $scope.Commands.openParrent(dir);
-                //  $scope.directory = DirectoryService.checkDir(dir);
             }
         },
         $scope.Modals = {

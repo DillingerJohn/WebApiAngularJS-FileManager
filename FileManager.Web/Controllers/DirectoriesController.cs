@@ -19,12 +19,20 @@ namespace FileManager.Web.Controllers
             _driveService = driveService;
         }
 
-        [HttpGet]
+        [HttpPost]
+        [AcceptVerbs]
+        [System.Web.Mvc.ValidateInput(false)]
         [AllowAnonymous]
-        public async Task<IHttpActionResult> GetDirectories()
+        [Route("GetDirectoriesInfo")]
+        public async Task<IHttpActionResult> GetDirectoriesInfo(PathClass current)
         {
-            DirectoryClass directory = await _driveService._get();
-
+            DirectoryClass directory = await _driveService._getInfo(current.path);
+            var data = new List<DirectoryClass> { };
+            data.Add(directory);
+            if (data == null)
+            {
+                return null;
+            }
             return Ok(directory);
         }
 
@@ -33,7 +41,7 @@ namespace FileManager.Web.Controllers
         [Route("ByPath/{path?}")]
         public async Task<IHttpActionResult> GetDirectoryByPath(string path = "")
         {
-            DirectoryClass directory = await _driveService._get(path);
+            DirectoryClass directory = await _driveService._getInfo(path);
             if (directory == null)
             {
                 return NotFound();
@@ -51,7 +59,7 @@ namespace FileManager.Web.Controllers
             {
                 return BadRequest(ModelState);
             }
-            DirectoryClass Dir = await _driveService._get(dir.parrentPath);
+            DirectoryClass Dir = await _driveService._getInfo(dir.parrentPath);
             List<DirectoryClass> directory = new List<DirectoryClass> { };
             directory.Add(Dir);
             if (directory == null)
@@ -71,7 +79,7 @@ namespace FileManager.Web.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var getDit = await _driveService._get(dir.rootPath);
+            var getDit = await _driveService._getInfo(dir.rootPath);
             List<DirectoryClass> directory = new List<DirectoryClass>();
             directory.Add(getDit);
             if (directory == null)
@@ -92,7 +100,7 @@ namespace FileManager.Web.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var getDit = await _driveService._get(dir.path);
+            var getDit = await _driveService._getInfo(dir.path);
             List<DirectoryClass> directory = new List<DirectoryClass>();
             directory.Add(getDit);
             if (directory == null)
@@ -103,21 +111,21 @@ namespace FileManager.Web.Controllers
 
         }
         [AllowAnonymous]
-        [System.Web.Mvc.ValidateInput(false)]
+        [HttpPost]
         [AcceptVerbs]
-        [HttpGet]
-        [Route("GetDirectory/{path?}")]
-        public async Task<IHttpActionResult> GetDirectory(string path = "")
+        // [Route("GetDirectory/{path?}")]
+        public async Task<List<DirectoryClass>> GetDirectory(PathClass path)
         {
+            string url = string.Empty;try { url = path.path; } catch { url = ""; }
             // DirectoryClass directory = await _driveService._get(path);
-            DirectoryClass directory = await _driveService._get(path);
+            DirectoryClass directory = await _driveService._getNames(url);
             var resultdata = new List<DirectoryClass> {};
             resultdata.Add(directory);
                if (resultdata == null)
                {
                    return null;
                }
-            return Ok(resultdata);
+            return resultdata;
         }
 
 
@@ -125,7 +133,8 @@ namespace FileManager.Web.Controllers
         protected override void Dispose(bool disposing)
         {
             if (disposing)
-            { }
+            {
+            }
             base.Dispose(disposing);
         }
     }

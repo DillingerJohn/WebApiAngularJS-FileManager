@@ -8,26 +8,31 @@ using System.Threading.Tasks;
 
 namespace FileManager.Services.Services
 {
-    public class DirectoryService : IDirectoryService, IDriveService
+    public class DirectoryService : IDirectoryService, IDriveService, IDisposable
     {
         private string _path;
-        private DirectoryClass directory;
+        private DirectoryClass directory = new DirectoryClass();
         private DirectoryInfo directoryInfo;
         public static long Mb = 1000000;
 
         public DirectoryService()
         {
-            directory = new DirectoryClass();
-
             //getting Logical Drives
             directory.Drives = _getDrives();
         }
-
-        public async Task<DirectoryClass> _get(string path)
+        public async Task<DirectoryClass> _getNames(string path)
         {
             if (String.IsNullOrEmpty(path) || String.IsNullOrWhiteSpace(path))
             {
-                return await _get();
+                return await _getNames();
+            }
+            return await _ProcessDirectoryNames(path);
+        }
+        public async Task<DirectoryClass> _getInfo(string path)
+        {
+            if (String.IsNullOrEmpty(path) || String.IsNullOrWhiteSpace(path))
+            {
+                return await _getInfo();
             }
             return await _ProcessDirectory(path);
         }
@@ -50,7 +55,23 @@ namespace FileManager.Services.Services
 
             return directory;
         }
+        public async Task<DirectoryClass> _ProcessDirectoryNames(string path)
+        {
+            directoryInfo = await _getDirectory(path);
+            directory.Name = directoryInfo.Name;
+            directory.path = new PathClass { path = path, parrentPath = (directoryInfo.Parent == null) ? path : directoryInfo.Parent.FullName, rootPath = directoryInfo.Root.FullName };
+            
+            //getting directory.Directories
+            directory.Folders = await GetSubDirectoriesNames(directoryInfo, SearchOption.TopDirectoryOnly);
+           // GetSubDirectories(directoryInfo, SearchOption.TopDirectoryOnly);
+            //directory.Files
+            directory.Files = await GetDirFiles(directoryInfo, SearchOption.TopDirectoryOnly);
 
+            directory.Created = directoryInfo.CreationTime;
+            directory.Modified = directoryInfo.LastWriteTime;
+            directory.GetCurrentDrive();
+            return directory;
+        }
         public async Task<DirectoryInfo> _getDirectory(string path)
         {
             return await Task.Run(() => {
@@ -61,12 +82,11 @@ namespace FileManager.Services.Services
             }
             );
         }
-
-        public static async Task<List<SubDirectoryClass>> GetSubDirectories(DirectoryInfo d, SearchOption searchOption)
+        public static async Task<List<SubDirectoryClass>> GetSubDirectoriesNames(DirectoryInfo d, SearchOption searchOption)
         {
-            return await Task.Run(async () =>
+            return await Task.Run(() =>
             {
-                var subDirs = d.EnumerateDirectories("*", searchOption).Select(q => new SubDirectoryClass
+                return d.EnumerateDirectories("*", searchOption).Select(q => new SubDirectoryClass
                 {
                     path = new PathClass { path = q.FullName },
                     Name = q.Name,
@@ -74,6 +94,14 @@ namespace FileManager.Services.Services
                     Created = q.CreationTime,
                     Modified = q.LastWriteTime
                 }).ToList();
+            });
+        }
+        public static async Task<List<SubDirectoryClass>> GetSubDirectories(DirectoryInfo d, SearchOption searchOption)
+        {
+            return await Task.Run(async () =>
+            {
+                var subDirs = await GetSubDirectoriesNames(d, searchOption);
+
                 foreach (var folder in subDirs)
                 {
                     try {
@@ -200,7 +228,12 @@ namespace FileManager.Services.Services
             });
         }
 
-        public async Task<DirectoryClass> _get()
+        public async Task<DirectoryClass> _getNames()
+        {
+            _path = Directory.GetCurrentDirectory();
+            return await _ProcessDirectoryNames(_path);
+        }
+        public async Task<DirectoryClass> _getInfo()
         {
             _path = Directory.GetCurrentDirectory();
             return await _ProcessDirectory(_path);
@@ -213,52 +246,42 @@ namespace FileManager.Services.Services
             return size;
         }
 
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    directory = null;
+                    directoryInfo = null;
+                    _path = null;
+                }
 
+                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+                // TODO: set large fields to null.
 
-        /*   public static async Task<IEnumerable<long>> GetAllDirFiles(string path, SearchOption searchOption)
-   {
-       return await Task.Run(() =>
-       {
+                disposedValue = true;
+            }
+        }
 
-             // var allFiles = Directory.EnumerateFiles(path, "*.*", searchOption);
-           var alldirFiles  = GetAllFiles(path, "*");
+        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+        // ~DirectoryService() {
+        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+        //   Dispose(false);
+        // }
 
-              var fileQ = from file in alldirFiles select getFileSize(file);
-              return fileQ;//..ToArray();
-       });
-   }*/
-        /*   static long getFileSize(string fileName)
-   {
-       long fileSize;
-       try
-       {
-           System.IO.FileInfo fi = new System.IO.FileInfo(fileName);
-           fileSize = fi.Length;
-       }
-       catch (System.IO.FileNotFoundException)
-       {
-           fileSize = 0;
-       }
-       return fileSize;
-   }*/
-        /*   public static IEnumerable<String> GetAllFiles(string path, string searchPattern)
-           {
-               return System.IO.Directory.EnumerateFiles(path,"*").Union(
-                   System.IO.Directory.EnumerateDirectories(path).SelectMany(d =>
-                   {
-                       try
-                       {
-                           return GetAllFiles(d, "*");
-                       }
-                       catch (UnauthorizedAccessException e)
-                       {
-                           return Enumerable.Empty<String>();
-                       }
-                   }));
-           }*/
-
-
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            // TODO: uncomment the following line if the finalizer is overridden above.
+            // GC.SuppressFinalize(this);
+        }
+        #endregion
 
     }
 }

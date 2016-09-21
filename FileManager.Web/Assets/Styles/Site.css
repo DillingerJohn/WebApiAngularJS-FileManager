@@ -70,7 +70,7 @@ a.folderButton{cursor:pointer;color:#000;}a.folderButton:hover{color:#428bca;}
     font-size: 21px;
     color: #fff;}
 .align-center{text-align:center;}
-.top-line-submenu{opacity:0.85;}
+.top-line-submenu{opacity:0.85;color: #2196f3;}
 .drive-panel{color:#000;}
 .active-drive{box-shadow: 2px 5px 11px #428bca;
     border: 3px solid #5bc0de;}
